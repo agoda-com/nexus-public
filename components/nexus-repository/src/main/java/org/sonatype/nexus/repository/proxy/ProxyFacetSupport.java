@@ -38,6 +38,7 @@ import org.sonatype.nexus.repository.storage.MissingBlobException;
 import org.sonatype.nexus.repository.storage.RetryDeniedException;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
 import org.sonatype.nexus.validation.constraint.Url;
 
@@ -195,6 +196,13 @@ public abstract class ProxyFacetSupport
     if (!isStale(context, content)) {
       return content;
     }
+    Request request = context.getRequest();
+    if (request != null && request.getHeaders() != null && request.getHeaders().get("User-Agent") != null &&
+            request.getHeaders().get("User-Agent").startsWith("Nexus/")) {
+      request.getAttributes().set("DisableNegativeCache", true);
+      return null;
+    }
+
     if (contentCooperation == null) {
       return doGet(context, content);
     }
